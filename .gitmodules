@@ -1,0 +1,3 @@
+[submodule "libs/python/SyncPy"]
+	path = libs/python/SyncPy
+	url = https://github.com/syncpy/SyncPy.git

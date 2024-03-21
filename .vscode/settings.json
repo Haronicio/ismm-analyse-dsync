@@ -1,4 +1,6 @@
 {
     "workbench.localHistory.enabled": true,
-    "workbench.localHistory.maxFileSize": 2000
+    "workbench.localHistory.maxFileSize": 2000,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic"
 }

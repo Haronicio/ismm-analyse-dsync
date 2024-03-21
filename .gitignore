@@ -2,5 +2,6 @@ scripts/copy-to-wsl.bash
 .vscode-server
 .dbus
 scripts/copy-to-win.bash
-data
+data/*
+!data/csv/
 data.tar.gz

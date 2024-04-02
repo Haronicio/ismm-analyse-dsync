@@ -5,3 +5,6 @@ scripts/copy-to-win.bash
 data/*
 !data/csv/
 data.tar.gz
+data/csv/change_all.csv
+data/csv/click_tempo_all.csv
+data/csv/mask_attack_all.csv

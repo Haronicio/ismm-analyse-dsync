@@ -1,51 +1,93 @@
 # Reaper Tool for Onset Extraction
 
-Ce document explique comment j'ai mis en place un outil d'extraction d'onset avec Reaper dans le cadre du projet de recherche sur l'analyse de la désynchronisation  
+
+This document explains how I set up an onset extraction tool using Reaper in the context of a research project on desynchronization analysis.
 
 ## Abstract
 
-Pour des analyses plus poussé, il  a fallu extraire les onsets de chaque musicien lors des expérimentations, il y avait 19 micros(*) pour chaque instrument/ partie des instruments
+For more in-depth analyses, it was necessary to extract the onsets of each musician during experiments, with 25 microphones for each instrument or part of the instruments.
 
-Lors de l'extraction d'onsets on se heurte à deu problèmes majeurs :
+When extracting onsets, we encounter two major problems:
 
-* les micros captent aussi les bruits ambient dont les autres instruments, il en résulte que par exemple le sax êtant prêt de la grosse caisse(*), le bruit de celle-ci vient parasyter le son de notre sax, il faut donc nettoyer spectralement l'audio
-* détécté l'onset est très particulier car les transients sont différents  pour chaque type de son produit, après avoir nettoyer le spectre il faut manuellement déterminer ou es ce qu'on peu considérer qu'un son ce déclenche
+*   The microphones also capture ambient sounds, including those from other instruments. For example, the saxophone being close to the bass drum, the sound of it interferes with the sound of our saxophone. Therefore, it is necessary to clean the audio spectrally.
+*   Detecting the onset is very particular because the transients differ for each type of sound produced. After cleaning the spectrum, it is necessary to manually determine where one can consider that a sound is triggered.
 
-*Pouquoi Reaper ?*
+_Why Reaper?_
 
-Originalement la méthode de Thomas Wolf utilise deux outils, Audacity pour nettoyer les fréquences avec un EQ à bande et Sonic Vizualizer pour détetcter les transients (à l'aide de 2 algorithmes) et exporter les marqueurs, d'ailleurs l'un des algo utilisé fait perdre de la précision temporelle.
+Originally, Thomas Wolf's method used two tools: Audacity to clean frequencies with a band EQ, and Sonic Visualizer to detect transients (using 2 algorithms) and export markers. One of the algorithms used resulted in a loss of temporal precision.
 
-Je propose d'unifier en un seul et même outil, j'ai chois Reaper car c'est un DAW que je connais bien et qui a une API exaustive et largement documenté pour créer des Scripts et Plug in audio personnalisé
+I propose to unify into a single tool. I chose Reaper because it is a DAW that I am familiar with and has a quite exhaustive and well-documented API for creating custom scripts and audio plugins. Moreover, it can be used without the need for a license. [Download Reaper](https://www.reaper.fm/)
 
 ## Method
 
-la méthode ce base sur donc 3 points, nettoyer les fréquences indésirable et détecter les onset créer/exporter les marqueurs , d'abord apporter le media dans une track, s'assurer que les sample rate du projet soit celui des fichiers son (càd 48 kHz)
+> 💡 To take full advantage of all Reaper's features, it is strongly recommended to install these two plugins: [ReaPack](https://reapack.com/) and [SWS](https://www.sws-extension.org/). If you are new to Reaper, I highly recommend the tutorial videos by [Kenny Gioia](https://www.youtube.com/@REAPERMania/videos), the guru of Reaper.
 
-1. **Nettoyage spectrale**
-   * Reaper introduit un outil formidable de manipulation spectrale sur un spectrogramme, c'est cet outil que nous allons utiliser pour prendre le profile spectrale du bruit pour nettoyer notre piste, click droit sur l'item -> Spectral Edit
-   * Afficher le spectrogramme : click droit sur l'item -> Spectral Edits -> Always show Spectrogramm , alternativement : View -> Peak Display Settings selectionne spectrogram + peaks
-   * Ajouter une fenêtre d'édition : Faite une sélection de l'endroit ou l'on souhaite prendre le profile click droit sur l'item -> Spectral Edits -> Add spectral edits to item , ensuite manipuler la fenêtre, des information détailler ce trouve dans [la section 7.39]([https://](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf))
-   * *tips pour sélectionner le profile du bruit* : êtant donné que les tempis sont différents, il arrivera un moment ou le son que l'on souhaite conserver ce retrouve isoler des sons parasyte sur le spectrogram et la waveform, on peut clairement le distinquer visuellement et à l'écoute, ce le meilleur profile a prendre, choississez aussi un FFT size assez grand pour être précis sur ce qu'on sélectionne
-   * Click droit sur la fenêtre -> Solo spectral edit, vous n'entendrez alors que le bruit indésirable, ajouter alors un FX au track : View -> Fx Browser, chercher ReaFir (plugin built-in de Reaper) une FFT dynamic avec EQ à phase non linéaire; et glisse le sur le track
-   * Manipuler le plugin est relativement siple et des information complémentaire peuvent être trouvé dans [la section 16.12](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf), ajuster FFT size à la même valeur que précedemment, choississez le mode substract, joué votre time selction (en boucle) et check Automatically build noise profile (enable during noise), le profile spectrale du bruit est compensé et en ~5 secondes il devrait disparaitre
-   * Click droit sur la fenêtre -> uncheck Solo spectral edit, click droit sur l'item -> Glue items, pour rendre un nouvel item sans bruit (non destructif), le fx peut être désactivé
+The method is therefore based on 3 points: cleaning undesirable frequencies, detecting onsets, and exporting markers. Start by importing the desired media into a track, ensuring that the project's sample rate matches the files' (i.e., 48 kHz).
 
-2. **Détection de transient**
-   * La detection de transient ce fait à l'aide d'un algorithme built-in de reaper, click droit sur l'item -> item processing -> dynamic split item, check at transient et régle Min slice length Min silence length a des valeurs raisonnable pour l'item que vous souhaitez sélectionner, plus d'info sur cette outils dans [la section 7.36](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf), sélectionne Action to perform
-   : Add transient guide markers to selected items, pour siplement générer des guides pour chaque transients
-   *  click sur Set transient sensitivity pour paramétrer la sensibililté et le treshold de la détection, vous pouvez vous aider des guides qui aparaissent sur la waveform
-   *  Une fois que vous êtes satisfait du découpage, vous pouvez clicker sur generate guide, ils seront visible sur la waveform
+1.  **Spectral Cleaning**
+    
+    *   Reaper introduces a formidable tool for spectral manipulation on a spectrogram. We will use this tool to take the spectral profile of the noise to clean our track. Right-click on the item -> Spectral Edit.
+    *   To display the spectrogram: right-click on the item -> Spectral Edits -> Always show Spectrogram, alternatively: View -> Peak Display Settings, select "spectrogram + peaks".
+    *   To add an editing window: make a time selection of the area where you want to take the noise profile, right-click on the item -> Spectral Edits -> Add spectral edits to item, then manipulate the window. Detailed information is available in [section 7.39](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf).
+    *   _Tips for selecting the noise profile_: given that tempos differ, there will come a time when the sound we want to keep is isolated from parasite sounds on the spectrogram and waveform. It can be clearly distinguished visually and by listening. Also choose an FFT size that suits the precision of your profile.
+    *   Right-click on the window -> Solo spectral edit. You will then only hear the undesirable noise. Then add an FX to the track: View -> FX Browser, search for ReaFir (Reaper's built-in plugin) a dynamic FFT with non-linear phase EQ; and drag it onto the track.
+    *   Manipulating the plugin is relatively simple, and additional information can be found in [section 16.12](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf). Adjust the FFT size to the same value as previously, choose the subtract mode, play your time selection (in loop) and check Automatically build noise profile (enable during noise). The spectral profile of the noise is compensated and in about 3 seconds it should disappear. It is also useful to manipulate the Gain to compensate for the volume loss due to spectral cleaning.
+    *   Of course, it is possible to add other plugins, such as a graphic EQ (ReaEQ), to enhance the frequencies to be preserved.
+    *   Right-click on the window -> uncheck Solo spectral edit, right-click on the track -> Render/freeze tracks -> Freeze tracks to mono, to render the entire track. This operation is reversible.
+2.  **Transient Detection**
+    
+    *   Transient detection is done using a built-in algorithm of Reaper. Right-click on the item -> item processing -> dynamic split item, check at transient and set Min slice length to the minimum duration between each transient (to know this value, make a time selection in the arrangement, in the transport bar you will see the length of your selection). More info on this tool in [section 7.36](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf). Select Action to perform: Add transient guide markers to selected items, to simply generate guides for each transient.
+    *   Click on Set transient sensitivity to adjust the sensitivity and threshold of detection. Dotted guides will appear to preview the transients.
+    *   Once you are satisfied with the segmentation, you can click on generate guide. They will be visible on the waveform.
+3.  **Marker Export**
+    
+    *   Place the cursor at the beginning of the item, each press of TAB will move from one transient to another. At each transient, press M to place a marker, adjust the marker's position according to preference.
+    *   For better visibility, remove the transients. Moreover, moving a transient transforms it into a stretch marker, which we do not want.
+    *   Export the markers in the correct format with all the required time precision. Third-party scripts are necessary as there is a precision loss with the basic one. View -> Region/Marker Manager -> check Marker, select all markers, right-click -> export... Another method is to download the SWS script bundle which includes a marker list in which data can be exported with formatting to the millisecond.
 
-3. **Exportation des markers**
-   *  Place le curseur au début de l'item, chaque appui sur TAB va passer d'un transient à l'autre, à chaque transient appuyer sur M pour placer un marker, ajuster la position du marker en fonction de la préférence
-   *  Pour une meilleur visibilité enlever les transients , de plus, bouger un transient le transforme en stretch Marker, ce que nous ne voulons pas
-   *  Exporter les marker au bon formattage avec toutes la précisions du temps requiet des script tiers car il y a une perte de précision avec celui de base, View -> Region/Marker Manager -> check Marker , select all Marker click droit -> export ... , l'autre moyen est de télécharger l'esemble de script SWS qui inclu un marker List dans lequel on peut exporter les données avec un formattage à la ms prêt
+## The Tool
 
-## TODO
+The developed tool incorporates the three parts seen previously to accelerate the work. It requires the plugins ReaPack (package manager) and SWS (API extension), but also Ultraschall (another API extension) and Lokasenna GUI (a set of classes for the user interface). Upon starting the script, these last two should install automatically.
 
-Récupérer le range d'une fenêtre specrtral edit
-Solo la fenêtre le profile du bruit
-Appliquer Fir à partir de l'empreinte et glue item
-Transient guide to Marker/Take Marker
-Utiliser des Take Marker (locale a un item) plutôt que des Marker qui sont globale au projet
-Export transient guide avec formattage
+After installing the first two plugins, go to Extensions -> ReaPack -> Manage Repository -> Options -> Install new packages when synchronizing -> apply. The SWS packages should install ([ReaPack User Guide](https://reapack.com/user-guide)).
+
+### Installation
+
+1.  Place the folder _Analyse Dsync Tools_ into the Reaper Resource path (Options -> Show REAPER resource path in explorer/finder), Scripts folder.
+2.  Actions -> Show action list or press "?", click on New Action -> Load Reascript and select the file "analyse-dsync - Onset Extraction Tool.lua".
+3.  This customized action now appears in the list of Reaper actions. Press Run to start it. The missing packages should install.
+
+### Overview
+
+First, make sure to import your items into separate tracks. For this, drag and drop a batch of files towards Reaper. A dialog box will open asking you what action to perform.
+
+The interface is presented as follows:
+
+The header of the interface shows which track is selected with the name of the file in the track. The selected track is automatically soloed so you can freely listen to it individually. Pressing the arrows will move you from one track to another. "Estimated spacing in ms" is an approximate measure of the distance between each onset. To be calculated, at least 3 markers are required.
+
+The frame just below presents 3 tabs representing the 3 stages of the method: cleaning, detection, and export. Each tab presents a frame of options (on the left) in which you can open Reaper's adjustment dialog boxes.
+
+### Spectral Cleaning
+
+Make sure your item is well-selected. "Get sound print" will add a spectral edit window to your item and add the VSTs ReaFIR for spectral cleaning and ReaEQ for a graphic equalizer to the track. Open ReaFIR, play the noise profile and check "Automatically build noise profile (enable during noise)". Uncheck when done. You can then make adjustments on the desired frequencies with ReaEQ.
+
+Once finished, press "done". The track will be frozen and the item will be locked. Obviously, you can reapply as much spectral cleaning as desired if you unlock the item.
+
+### Transient Picking
+
+The behavior of this part is to first generate Transient Guides and then convert them into Take Markers, markers with a position relative to the item.
+
+Move one of the three sliders and the Transient Guides should be generated on your item. However, this is not very precise and rather gives an approximation of the settings to adopt. Therefore, I invite you to specify the generation of these guides by opening "dynamic split" and "transient detect". In "dynamic split", you can select the preset "analyse\_dsync\_split\_preset" and generate the guides in the most precise way possible. This method provides very good results if the parameters are correctly set.
+
+Check "Update Transients" to automatically convert the Transient Guides into Take Markers. You will then be able to navigate between the Take Markers by clicking on the arrows, so you can individually listen to each onset, observe the waveform and manually adjust the position, or delete a marker by holding down Alt/Option. Finally, if you place the cursor of the arranger and press on the diamond, you create a new marker.
+
+### Export
+
+"Export selected item" will export the list of marker positions (onset, transient) in CSV format to the desired location to the millisecond.
+
+"Export all items" will do so for all your tracks.
+
+> 💡 Recommended settings:
+> 
+> *   Peak Settings: freq log = 2.9, curve = 2.0, contrast = 1.20, bright = 0... -> Scale peaks by square root (half of range is 12dB rather than 6dB).
+> *   Uncheck "Use zero crossings" (less precise but prevents clicks), check "Display threshold in media items while this window is open".

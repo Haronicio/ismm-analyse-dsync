@@ -154,14 +154,15 @@ end
 
 function AddSpectralEdit()
   -- Ensure there's at least one item selected
-  local itemCount = reaper.CountSelectedMediaItems(0)
-  if itemCount == 0 then
-      reaper.ShowMessageBox("No items selected. Please select an item to add a spectral edit.", "Error", 0)
-      return
-  end
+--   local itemCount = reaper.CountSelectedMediaItems(0)
+--   if itemCount == 0 then
+--       reaper.ShowMessageBox("No items selected. Please select an item to add a spectral edit.", "Error", 0)
+--       return
+--   end
 
   -- Retrieve the first selected item
-  local item = reaper.GetSelectedMediaItem(0, 0)
+--   local item = reaper.GetSelectedMediaItem(0, 0)
+  local item = Selected_Item
   
   -- Perform action Spectrogram: Add spectral edit to item
   reaper.Main_OnCommand(command["Spectrogram: Add spectral edit to item"], 0)
@@ -192,14 +193,15 @@ end
 -- Made my own but ultrascallAPI have a good behavior for that
 function ModifyFirstSpectralEdit()
     -- Ensure there's at least one item selected
-    local itemCount = reaper.CountSelectedMediaItems(0)
-    if itemCount == 0 then
-        reaper.ShowMessageBox("No items selected. Please select an item to modify a spectral edit.", "Error", 0)
-        return
-    end
+    -- local itemCount = reaper.CountSelectedMediaItems(0)
+    -- if itemCount == 0 then
+    --     reaper.ShowMessageBox("No items selected. Please select an item to modify a spectral edit.", "Error", 0)
+    --     return
+    -- end
 
-    -- Get the first selected item and its active take
-    local item = reaper.GetSelectedMediaItem(0, 0)
+    -- -- Get the first selected item and its active take
+    -- local item = reaper.GetSelectedMediaItem(0, 0)
+    local item = Selected_Item
     local take = reaper.GetActiveTake(item)
     if not take then return end  -- Exit if there's no active take
 
@@ -325,12 +327,13 @@ end
 -- this use ultrashall API
 function LoadReaFIR_FxChain()
   -- get track
-  local itemCount = reaper.CountSelectedMediaItems(0)
-  if itemCount == 0 then
-      reaper.ShowMessageBox("No items selected. Please select an item.", "Error", 0)
-      return
-  end
-  local item = reaper.GetSelectedMediaItem(0, 0)
+--   local itemCount = reaper.CountSelectedMediaItems(0)
+--   if itemCount == 0 then
+--       reaper.ShowMessageBox("No items selected. Please select an item.", "Error", 0)
+--       return
+--   end
+--   local item = reaper.GetSelectedMediaItem(0, 0)
+  local item = Selected_Item
   if item then
   
       -- Get the track/ID associated with the item

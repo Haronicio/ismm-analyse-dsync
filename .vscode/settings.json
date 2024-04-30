@@ -2,5 +2,8 @@
     "workbench.localHistory.enabled": true,
     "workbench.localHistory.maxFileSize": 2000,
     "python.analysis.autoImportCompletions": true,
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "Lua.workspace.library": [
+        "c:\\Users\\haron\\.vscode\\extensions\\antoinebalaine.reascript-docs-0.1.2/resources/reaper-types.lua"
+    ]
 }

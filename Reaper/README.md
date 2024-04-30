@@ -32,6 +32,7 @@ The method is therefore based on 3 points: cleaning undesirable frequencies, det
     *   _Tips for selecting the noise profile_: given that tempos differ, there will come a time when the sound we want to keep is isolated from parasite sounds on the spectrogram and waveform. It can be clearly distinguished visually and by listening. Also choose an FFT size that suits the precision of your profile.
     *   Right-click on the window -> Solo spectral edit. You will then only hear the undesirable noise. Then add an FX to the track: View -> FX Browser, search for ReaFir (Reaper's built-in plugin) a dynamic FFT with non-linear phase EQ; and drag it onto the track.
     *   Manipulating the plugin is relatively simple, and additional information can be found in [section 16.12](https://dlz.reaper.fm/userguide/ReaperUserGuide712c.pdf). Adjust the FFT size to the same value as previously, choose the subtract mode, play your time selection (in loop) and check Automatically build noise profile (enable during noise). The spectral profile of the noise is compensated and in about 3 seconds it should disappear. It is also useful to manipulate the Gain to compensate for the volume loss due to spectral cleaning.
+    *   Also you cn use other function of plugin, in particular you can enhance the selected sprecrum print using EQ and Compressor (hold Ctrl and adjust FFT) increase compressor ratio will reduce attack
     *   Of course, it is possible to add other plugins, such as a graphic EQ (ReaEQ), to enhance the frequencies to be preserved.
     *   Right-click on the window -> uncheck Solo spectral edit, right-click on the track -> Render/freeze tracks -> Freeze tracks to mono, to render the entire track. This operation is reversible.
 2.  **Transient Detection**
@@ -69,7 +70,10 @@ The frame just below presents 3 tabs representing the 3 stages of the method: cl
 
 ### Spectral Cleaning
 
-Make sure your item is well-selected. "Get sound print" will add a spectral edit window to your item and add the VSTs ReaFIR for spectral cleaning and ReaEQ for a graphic equalizer to the track. Open ReaFIR, play the noise profile and check "Automatically build noise profile (enable during noise)". Uncheck when done. You can then make adjustments on the desired frequencies with ReaEQ.
+Make sure your item is well-selected. "Get sound print" will add a spectral edit window to your item and add the VSTs ReaFIR for spectral cleaning and ReaEQ for a graphic equalizer to the track.
+You can adjust knob to tweak bounded frequencies, frenquecy range, frequency/time contrast and compression.
+Open ReaFIR, play the noise profile and check "Automatically build noise profile (enable during noise)". Uncheck when done. Use substract to remove desired frequencies, Compressor to enhance and EQ to increase or diminuss, play with the output gain and the spectrogram : hold Ctrl to move spectrum and Shift to draw on spectrum
+You can then make adjustments on the desired frequencies with ReaEQ.
 
 Once finished, press "done". The track will be frozen and the item will be locked. Obviously, you can reapply as much spectral cleaning as desired if you unlock the item.
 
@@ -89,5 +93,11 @@ Check "Update Transients" to automatically convert the Transient Guides into Tak
 
 > 💡 Recommended settings:
 > 
-> *   Peak Settings: freq log = 2.9, curve = 2.0, contrast = 1.20, bright = 0... -> Scale peaks by square root (half of range is 12dB rather than 6dB).
+> *   Peak Settings: freq log = 2.9, curve = 2.0, contrast = 1.20, bright = 0... -> Scale peaks by square root (half of range is 12dB rather than 6dB)., rectify peak is also interesting
 > *   Uncheck "Use zero crossings" (less precise but prevents clicks), check "Display threshold in media items while this window is open".
+
+
+## Most recent edits
+
+* I modify the FX chain to include 2 ReaFir in parallel, one for the Equalizer and the other for substracting, you can use both or one and change settings as you want obviously
+* some minor bug to correct (script crash sometimes when adding spectral edit, markers doesn't update automaticly until changing track focus )

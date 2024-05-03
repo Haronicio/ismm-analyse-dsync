@@ -169,7 +169,6 @@ function AddSpectralEdit()
 
   
   reaper.UpdateArrange() -- Refresh the arrange view to reflect the changes
-  
   --[[ Here we assume there's a specific action for adding a spectral edit.
   local actionCommandID = reaper.NamedCommandLookup("blabla")
   
@@ -276,6 +275,8 @@ function FreezeTrack(trackIndex)
         -- Unselect all tracl and Set the track as selected
         reaper.SetOnlyTrackSelected(track)
         reaper.Main_OnCommand(command["Track: Freeze to mono"],0)
+        --re select new (first) item genereated
+        Selected_Item = reaper.GetTrackMediaItem(track, 0)
     end
 
 
@@ -335,7 +336,6 @@ function LoadReaFIR_FxChain()
 --   local item = reaper.GetSelectedMediaItem(0, 0)
   local item = Selected_Item
   if item then
-  
       -- Get the track/ID associated with the item
       local track = reaper.GetMediaItem_Track(item)
       local trackID = reaper.CSurf_TrackToID(track, false)
@@ -348,7 +348,6 @@ function LoadReaFIR_FxChain()
       -- get the state chunk of track
       local retval,trackStateChunk = reaper.GetTrackStateChunk(track,"",false)
       -- reaper.ShowConsoleMsg(trackStateChunk)
-      -- reaper.ShowConsoleMsg(tostring(retval))
       
       -- set the FX chain into the chunk string
       local retval, alteredTrackStateChunk = ultraschall.SetFXStateChunk(trackStateChunk,reaFIR_FXChain)
@@ -675,13 +674,13 @@ function exportAll()
     -- Call the function to open the browse folder dialog
     local retval, folderPath = reaper.JS_Dialog_BrowseForFolder(caption, initialFolder)
 
-    -- Check if the user selected a folder
+    --[[ Check if the user selected a folder
     if retval and folderPath ~= "" then
         reaper.ShowConsoleMsg("Selected folder: " .. folderPath .. "\n")
     else
         reaper.ShowConsoleMsg("No folder was selected.\n")
     end
-
+    ]]
     for index, takeMarkers in pairs(Onsets_Item) do
         -- Print_console(index)
         exportTakeMarkersToCSV(takeMarkers,folderPath.."/"..reaper.GetTakeName(reaper.GetActiveTake(reaper.GetTrackMediaItem(reaper.GetTrack(0, index), 0)))..".csv")
@@ -1356,7 +1355,7 @@ GUI.New("done", "Button", {
     col_txt = "txt",
     col_fill = "elm_frame",
 
-    func = function () FreezeTrack(Selected_Track) end
+    func = function () reaper.defer(FreezeTrack(Selected_Track))end
 })
 
 GUI.New("sound_print", "Button", {

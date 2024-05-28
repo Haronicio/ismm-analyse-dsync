@@ -77,6 +77,8 @@ You can then make adjustments on the desired frequencies with ReaEQ.
 
 Once finished, press "done". The track will be frozen and the item will be locked. Obviously, you can reapply as much spectral cleaning as desired if you unlock the item.
 
+![Spectral Cleaning of the Tool](./assets/OET-spectral%20cleaning.png)
+
 ### Transient Picking
 
 The behavior of this part is to first generate Transient Guides and then convert them into Take Markers, markers with a position relative to the item.
@@ -84,6 +86,8 @@ The behavior of this part is to first generate Transient Guides and then convert
 Move one of the three sliders and the Transient Guides should be generated on your item. However, this is not very precise and rather gives an approximation of the settings to adopt. Therefore, I invite you to specify the generation of these guides by opening "dynamic split" and "transient detect". In "dynamic split", you can select the preset "analyse\_dsync\_split\_preset" and generate the guides in the most precise way possible. This method provides very good results if the parameters are correctly set.
 
 Check "Update Transients" to automatically convert the Transient Guides into Take Markers. You will then be able to navigate between the Take Markers by clicking on the arrows, so you can individually listen to each onset, observe the waveform and manually adjust the position, or delete a marker by holding down Alt/Option. Finally, if you place the cursor of the arranger and press on the diamond, you create a new marker.
+
+![Transient Picking of thr Tool](./assets/OET-transient%20detect.png)
 
 ### Export
 

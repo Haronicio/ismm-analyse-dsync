@@ -1,0 +1,84 @@
+The following packages will be SUPERSEDED by a higher-priority channel:
+
+  brotli-python      conda-forge::brotli-python-1.1.0-py31~ --> pkgs/main::brotli-python-1.0.9-py39hd77b12b_8
+  debugpy            conda-forge::debugpy-1.8.1-py310h00ff~ --> pkgs/main::debugpy-1.6.7-py39hd77b12b_0
+  ipython            conda-forge/noarch::ipython-8.22.2-py~ --> pkgs/main/win-64::ipython-8.15.0-py39haa95532_0
+  jsonpointer        conda-forge/win-64::jsonpointer-2.4-p~ --> pkgs/main/noarch::jsonpointer-2.1-pyhd3eb1b0_0
+  jupyter_core       conda-forge::jupyter_core-5.7.2-py310~ --> pkgs/main::jupyter_core-5.5.0-py39haa95532_0
+  kiwisolver         conda-forge::kiwisolver-1.4.5-py310h2~ --> pkgs/main::kiwisolver-1.4.4-py39hd77b12b_0
+  markupsafe         conda-forge::markupsafe-2.1.5-py310h8~ --> pkgs/main::markupsafe-2.1.3-py39h2bbff1b_0
+  msgpack-python     conda-forge::msgpack-python-1.0.7-py3~ --> pkgs/main::msgpack-python-1.0.3-py39h59b6b97_0
+  pandas             conda-forge::pandas-2.2.1-py310hecd32~ --> pkgs/main::pandas-1.2.4-py39hd77b12b_0
+  psutil             conda-forge::psutil-5.9.8-py310h8d173~ --> pkgs/main::psutil-5.9.0-py39h2bbff1b_0
+  pywin32            conda-forge::pywin32-306-py310h00ffb6~ --> pkgs/main::pywin32-305-py39h2bbff1b_0
+  pywinpty           conda-forge::pywinpty-2.0.13-py310h00~ --> pkgs/main::pywinpty-2.0.10-py39h5da7b33_0
+  rpds-py            conda-forge::rpds-py-0.18.0-py310h87d~ --> pkgs/main::rpds-py-0.10.6-py39h062c2fa_0
+  statsmodels        conda-forge::statsmodels-0.14.1-py310~ --> pkgs/main::statsmodels-0.14.0-py39h9128911_0
+  tornado            conda-forge::tornado-6.4-py310h8d1730~ --> pkgs/main::tornado-6.3.3-py39h2bbff1b_0
+
+The following packages will be DOWNGRADED:
+
+  argon2-cffi-bindi~                 21.2.0-py310h2bbff1b_0 --> 21.2.0-py39h2bbff1b_0
+  async-lru                           2.0.4-py310haa95532_0 --> 2.0.4-py39haa95532_0
+  audioread                           3.0.1-py310h5588dad_1 --> 3.0.1-py39h0d475fb_1
+  certifi                          2024.2.2-py310haa95532_0 --> 2024.2.2-py39haa95532_0
+  cffi                               1.16.0-py310h2bbff1b_1 --> 1.16.0-py39h2bbff1b_1
+  colorama                            0.4.6-py310haa95532_0 --> 0.4.6-py39haa95532_0
+  contourpy                           1.2.0-py310h59b6b97_0 --> 1.2.0-py39h59b6b97_0
+  entrypoints                           0.4-py310haa95532_0 --> 0.4-py39haa95532_0
+  exceptiongroup                      1.2.0-py310haa95532_0 --> 1.2.0-py39haa95532_0
+  fonttools                          4.51.0-py310h2bbff1b_0 --> 4.51.0-py39h2bbff1b_0
+  h11                                0.14.0-py310haa95532_0 --> 0.14.0-py39haa95532_0
+  idna                                  3.7-py310haa95532_0 --> 3.7-py39haa95532_0
+  ipympl                              0.9.3-py310haa95532_0 --> 0.9.3-py39haa95532_0
+  ipywidgets                          8.1.2-py310haa95532_0 --> 8.1.2-py39haa95532_0
+  joblib                              1.4.0-py310haa95532_0 --> 1.4.0-py39haa95532_0
+  jupyter_console                     6.6.3-py310haa95532_0 --> 6.6.3-py39haa95532_0
+  jupyterlab_widgets                 3.0.10-py310haa95532_0 --> 3.0.10-py39haa95532_0
+  lazy_loader                           0.3-py310haa95532_0 --> 0.3-py39haa95532_0
+  llvmlite                           0.42.0-py310hf2fb9eb_0 --> 0.42.0-py39hf2fb9eb_0
+  matplotlib-base                     3.8.4-py310h4ed8f06_0 --> 3.8.4-py39h4ed8f06_0
+  matplotlib-inline                   0.1.6-py310haa95532_0 --> 0.1.6-py39haa95532_0
+  nest-asyncio                        1.6.0-py310haa95532_0 --> 1.6.0-py39haa95532_0
+  numba                              0.59.1-py310hd77b12b_0 --> 0.59.1-py39hd77b12b_0
+  numpy                              1.26.4-py310hf667824_0 --> 1.26.4-py39hd5b4b07_0
+  pillow                             10.3.0-py310hf5d6e66_0 --> 10.3.0-py39hb49f884_0
+  pip                                  24.0-py310haa95532_0 --> 24.0-py39haa95532_0
+  pkgutil-resolve-n~                 1.3.10-py310haa95532_1 --> 1.3.10-py39haa95532_1
+  prompt-toolkit                     3.0.43-py310haa95532_0 --> 3.0.43-py39haa95532_0
+  pyparsing                           3.0.9-py310haa95532_0 --> 3.0.9-py39haa95532_0
+  pysocks                             1.7.1-py310haa95532_0 --> 1.7.1-py39haa95532_0
+  python                         3.10.13-h4de0772_1_cpython --> 3.9.18-1_73_pypy
+  python-json-logger                  2.0.7-py310haa95532_0 --> 2.0.7-py39haa95532_0
+  python_abi                                   3.10-4_cp310 --> 3.9-4_pypy39_pp73
+  pytz                               2024.1-py310haa95532_0 --> 2024.1-py39haa95532_0
+  pywavelets                          1.5.0-py310h9128911_0 --> 1.5.0-py39h9128911_0
+  pyyaml                              6.0.1-py310h2bbff1b_0 --> 6.0.1-py39h2bbff1b_0
+  pyzmq                              25.1.2-py310hd77b12b_0 --> 25.1.2-py39hd77b12b_0
+  qtpy                                2.4.1-py310haa95532_0 --> 2.4.1-py39haa95532_0
+  rfc3339-validator                   0.1.4-py310haa95532_0 --> 0.1.4-py39haa95532_0
+  rfc3986-validator                   0.1.1-py310haa95532_0 --> 0.1.1-py39haa95532_0
+  scikit-learn                        1.4.2-py310h4ed8f06_1 --> 1.4.2-py39h4ed8f06_1
+  scipy                              1.13.0-py310h46043a1_1 --> 1.12.0-py39hd5b4b07_2
+  send2trash                          1.8.2-py310haa95532_0 --> 1.8.2-py39haa95532_0
+  setuptools                         69.5.1-py310haa95532_0 --> 69.5.1-py39haa95532_0
+  soupsieve                             2.5-py310haa95532_0 --> 2.5-py39haa95532_0
+  soxr-python                         0.3.7-py310h3e78b6c_0 --> 0.3.7-py39h52f1e7f_0
+  tinycss2                            1.2.1-py310haa95532_0 --> 1.2.1-py39haa95532_0
+  tomli                               2.0.1-py310haa95532_0 --> 2.0.1-py39haa95532_0
+  typing-extensions                  4.11.0-py310haa95532_0 --> 4.11.0-py39haa95532_0
+  typing_extensions                  4.11.0-py310haa95532_0 --> 4.11.0-py39haa95532_0
+  unicodedata2                       15.1.0-py310h2bbff1b_0 --> 15.1.0-py39h2bbff1b_0
+  urllib3                             2.2.1-py310haa95532_0 --> 2.2.1-py39haa95532_0
+  webencodings                        0.5.1-py310haa95532_1 --> 0.5.1-py39haa95532_1
+  wheel                              0.43.0-py310haa95532_0 --> 0.43.0-py39haa95532_0
+  widgetsnbextension                 4.0.10-py310haa95532_0 --> 4.0.10-py39haa95532_0
+  win_inet_pton                       1.1.0-py310haa95532_0 --> 1.1.0-py39haa95532_0
+  zipp                               3.17.0-py310haa95532_0 --> 3.17.0-py39haa95532_0
+
+The following packages will be DOWNGRADED:
+
+  libblas                                3.9.0-22_win64_mkl --> 3.9.0-18_win64_mkl
+  libcblas                               3.9.0-22_win64_mkl --> 3.9.0-18_win64_mkl
+  liblapack                              3.9.0-22_win64_mkl --> 3.9.0-18_win64_mkl
+  mkl                                 2024.1.0-h66d3029_692 --> 2022.1.0-h6a75c08_874

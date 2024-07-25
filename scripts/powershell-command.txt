@@ -1,0 +1,18 @@
+$res = 0
+$nfile = 0
+foreach ($file in $files) {
+   # Read the file content
+   $content = Get-Content -Path $file.FullName
+
+   # Count the number of non-blank lines
+   $nonBlankLines = $content | Where-Object { $_.Trim() -ne "" } | Measure-Object -Line
+
+   # Output the filename and the count of non-blank lines
+   Write-Output "$($file.Name): $($nonBlankLines.Lines) non-blank lines"
+     $res = $res + $($nonBlankLines.Lines)
+     $nfile = $nfile + 1
+ }
+$res = $res - $nfile
+Write-Output "$res lines"
+
+count line in a file (minus the number of file)

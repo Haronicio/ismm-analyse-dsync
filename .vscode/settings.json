@@ -5,5 +5,8 @@
     "python.analysis.typeCheckingMode": "basic",
     "Lua.workspace.library": [
         "c:\\Users\\haron\\.vscode\\extensions\\antoinebalaine.reascript-docs-0.1.2/resources/reaper-types.lua"
+    ],
+    "python.analysis.extraPaths": [
+        "./libs/python/SyncPy/src/Methods"
     ]
 }

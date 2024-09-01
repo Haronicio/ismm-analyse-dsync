@@ -1,6 +1,55 @@
-#imports
+'''
+    Welcome to analyse dsync tool's main script
+
+    Bienvenue dans le script principale de analyse dsync tool
+
+    Section
+
+    - imports
+    - build
+    - debug plot
+    - signal
+    - stats
+    - data preprocess
+    - data process personnal
+    - data process interpersonnal
+    - main
+
+    by Haron DAUVET-DIAKHATE 31 août 2024
+
+
+
+    note : Many FutureWarnings
+'''
+
+
+
+
+
+
+#                            __      ___      ___    _______       ______      _______    ___________    ________  
+#                           |" \    |"  \    /"  |  |   __ "\     /    " \    /"      \  ("     _   ")  /"       ) 
+#                           ||  |    \   \  //   |  (. |__) :)   // ____  \  |:        |  )__/  \\__/  (:   \___/  
+#                           |:  |    /\\  \/.    |  |:  ____/   /  /    ) :) |_____/   )     \\_ /      \___  \    
+#                           |.  |   |: \.        |  (|  /      (: (____/ //   //      /      |.  |       __/  \\   
+#                           /\  |\  |.  \    /:  | /|__/ \      \        /   |:  __   \      \:  |      /" \   :)  
+#                          (__\_|_) |___|\__/|___|(_______)      \"_____/    |__|  \___)      \__|     (_______/   
+#                         
+                                                                                  
+# imports
+
+
+import warnings
+# def custom_warning_handler(message, category, filename, lineno, file=None, line=None):
+#     print(f'FutureWarning at {filename}:{lineno} - {message}')
+# warnings.simplefilter('always', FutureWarning)
+# warnings.showwarning = custom_warning_handler
+# warnings.simplefilter('error', FutureWarning)
+
+
 import numpy as np
 import pandas as pd
+pd.option_context('chained_assignment', None)
 from sklearn.preprocessing import MinMaxScaler,StandardScaler,RobustScaler
 
 import matplotlib.pyplot as plt
@@ -11,7 +60,7 @@ import seaborn as sns
 import scipy as sp
 from scipy.stats import zscore,permutation_test,kendalltau
 from scipy import signal
-from scipy.signal import hilbert,hilbert2
+from scipy.signal import hilbert
 # from scipy.ndimage import shift
 from scipy.fft import fft,fftfreq
 # from scipy.fftpack import *
@@ -19,14 +68,15 @@ from tsfresh import extract_features
 import librosa
 import librosa.display
 import pycwt as wavelet #wavelet
-import pywt
-from dtw import *
+# import pywt
+# from dtw import *
 from functools import partial
 import itertools
 from typing import Any, Dict, Optional, Tuple, Union
 from typing_extensions import Self
 from statsmodels.tsa.stattools import grangercausalitytests
 from statsmodels.tsa.ar_model import AutoReg
+from collections import deque
 
 
 from typing import Callable
@@ -36,7 +86,6 @@ import glob
 import os
 import sys
 import pickle
-import warnings
 
 import gc
 import re
@@ -46,7 +95,7 @@ import ipywidgets as widgets
 from ipywidgets import interact, interactive, fixed, interact_manual
 from IPython.display import Audio, display, clear_output
 
-from numba import jit,njit
+# from numba import jit,njit
 
 def import_external():
     global MutualInformation,WindowMutualInformation,GC,SGC,Normalize
@@ -66,6 +115,20 @@ def import_external():
     from utils import PeakDetect,ConvertContinueToBinary,Normalize
 
 import_external()
+
+
+
+#                                                         .=-.-.                           
+#                              _..---.    .--.-. .-.-.   /==/_ /    _.-.       _,..---._   
+#                            .' .'.-. \  /==/ -|/=/  |            .-,.'|     /==/,   -  \  
+#                           /==/- '=' /  |==| ,||=| -|  |==|  |  |==|, |     |==|   _   _\ 
+#                           |==|-,   '   |==|- | =/  |  |==|- |  |==|- |     |==|  .=.   | 
+#                           |==|  .=. \  |==|,  \/ - |  |==| ,|  |==|, |     |==|,|   | -| 
+#                           /==/- '=' ,| |==|-   ,   /  |==|- |  |==|- `-._  |==|  '='   / 
+#                          |==|   -   /  /==/ , _  .'   /==/. /  /==/ - , ,/ |==|-,   _`/  
+#                          `-._`.___,'   `--`..---'     `--`-`   `--`-----'  `-.`.____.'   
+
+# build
 
 
 MAIN_DATA_FOLDER = "../data/restart"
@@ -167,8 +230,6 @@ def infos_folder_to_complete_sig_df(info_folder : str,df : pd.DataFrame) -> pd.D
 
     return df
 
-    return df
-
 def onsets_folder_to_onset_df(onsets_folder : str) -> pd.DataFrame:
 
     def onset_csvname2musician(csvname):
@@ -235,6 +296,7 @@ def infos_folder_to_complete_onset_df(info_folder : str,df : pd.DataFrame) -> pd
     return df
 
 def trunc_dfs(dfs: Dict[str, pd.DataFrame], truncs: Dict[Any, Tuple[Optional[float], Optional[float]]] = {None:(None, None)},**kwargs : Any) -> Dict[str, pd.DataFrame]:
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     # always return a copy
     def trunc_mask(df, trunc_col, indexer_col, indexer, trunc_start, trunc_end):
         # Apply truncation mask if start and/or end is specified based on trunc_col following indexer rule
@@ -270,6 +332,7 @@ def trunc_dfs(dfs: Dict[str, pd.DataFrame], truncs: Dict[Any, Tuple[Optional[flo
     sig_trunc : pd.DataFrame = dfs['sig'][sig_combined_mask].copy().reset_index(drop=True) # type: ignore
     onset_trunc : pd.DataFrame = dfs['onset'][onset_combined_mask].copy().reset_index(drop=True) # type: ignore
 
+    warnings.filterwarnings("default")
     return {'sig': sig_trunc, 'onset': onset_trunc}
 
 #logic to create a filter's mask
@@ -288,8 +351,10 @@ def compiling_exp_to_df(    trial_folder : str,
                             info_folder : str,
                             trial_logic : Callable[[str],pd.DataFrame], 
                             info_logic :  Callable[[str,pd.DataFrame],pd.DataFrame]) -> pd.DataFrame:
-
+    
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     df = pd.DataFrame()
+
 
     #first construct df with signal/onset
     df = trial_logic(trial_folder)
@@ -297,6 +362,8 @@ def compiling_exp_to_df(    trial_folder : str,
     #complete df with id from info
 
     df = info_logic(info_folder,df)
+
+    warnings.filterwarnings("default")
 
     return df
 
@@ -445,11 +512,65 @@ class Dataset:
                 df = df.loc[df[key] == value].copy().reset_index(drop=True)
         
         return df
-    
-from collections import deque
 
-from numpy import isinf
-from pandas import DataFrame
+
+
+
+#                ______        _                   
+#                |  _  \      | |                  
+#                | | | |  ___ | |__   _   _   __ _ 
+#                | | | | / _ \| '_ \ | | | | / _` |
+#                | |/ / |  __/| |_) || |_| || (_| |
+#                |___/   \___||_.__/  \__,_| \__, |
+#                                             __/ |
+#                                            |___/ 
+ # debug plot
+
+
+def plot_signal(x, y, ax=None, title=None, xlabel=None, ylabel=None, ylim=None, show=False, **plot_kwargs):
+    """
+    Plot a signal on a given axis.
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    ax.plot(x, y, **plot_kwargs)
+
+    if title:
+        ax.set_title(title)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    if ylim:
+        ax.set_ylim(ylim)
+
+    if show:
+        plt.show()
+
+    return ax
+
+
+
+
+
+
+
+#                        ______   __                                __ 
+#                       /      \ |  \                              |  \
+#                      |  $$$$$$\ \$$  ______   _______    ______  | $$
+#                      | $$___\$$|  \ /      \ |       \  |      \ | $$
+#                       \$$    \ | $$|  $$$$$$\| $$$$$$$\  \$$$$$$\| $$
+#                       _\$$$$$$\| $$| $$  | $$| $$  | $$ /      $$| $$
+#                      |  \__| $$| $$| $$__| $$| $$  | $$|  $$$$$$$| $$
+#                       \$$    $$| $$ \$$    $$| $$  | $$ \$$    $$| $$
+#                        \$$$$$$  \$$ _\$$$$$$$ \$$   \$$  \$$$$$$$ \$$
+#                                    |  \__| $$                        
+#                                     \$$    $$                        
+#                                      \$$$$$$                         
+
+# signal
+
 
 class NoFrequencyError(Exception):
     """Exception personnalisée pour une situation spécifique."""
@@ -457,7 +578,6 @@ class NoFrequencyError(Exception):
         self.message = message
         super().__init__(self.message)
 
-# @jit
 def advanced_cfd_autoperiod(sig : np.ndarray,iter_perm  : int = 100,adjust_treshold :int = 0,tolerance : float = 0.2,w_threshold_rate : float = 1/3,
                             fs  : int = 100,nperseg  : int = 2192,noverlap  : int = 2048 ,nfft : int = 8192,psd_window_type  : str = 'hamming',debug : bool = False)-> list[Dict]:
 
@@ -488,6 +608,8 @@ def advanced_cfd_autoperiod(sig : np.ndarray,iter_perm  : int = 100,adjust_tresh
         - range: The frequency interval of the power.
         - weight : redundancy rate of the hint (higher is better)
     """
+
+    warnings.simplefilter(action='ignore', category=FutureWarning)
 
     def _acfda_find_treshold(sig : np.ndarray,fs,nfft = 8192,iter_perm = 100) -> list[float]:
         sig_p = np.ndarray(sig.shape)
@@ -877,6 +999,8 @@ def advanced_cfd_autoperiod(sig : np.ndarray,iter_perm  : int = 100,adjust_tresh
         plt.xlim(1E-2,50)
         plt.show()
 
+    warnings.filterwarnings("default")
+
     return res
 
 def get_principal_frequency(hints : Union[pd.DataFrame, Dict[str, list]]) -> Tuple[float,float,float]:
@@ -901,7 +1025,7 @@ def get_principal_frequency(hints : Union[pd.DataFrame, Dict[str, list]]) -> Tup
     max_index = products.idxmax()
 
     product_max = np.max(products)
-    products_without_max = products.drop(max_index)
+    products_without_max = products.drop(max_index).fillna(0)
     product_mean_without_max = np.mean(products_without_max)
     # relevancy = product_max / product_mean_without_max
     e = 0.1
@@ -1048,25 +1172,25 @@ def shift(arr, num, fill_value):
         result[:] = arr
     return result
 
-def dwt_alignement(sig1,sig2):
-    alignment = dtw(sig1,sig2,keep_internals=True)
-    slope, intercept = np.polyfit(alignment.index1, alignment.index2, 1)
+# def dwt_alignement(sig1,sig2):
+#     alignment = dtw(sig1,sig2,keep_internals=True)
+#     slope, intercept = np.polyfit(alignment.index1, alignment.index2, 1)
 
-    x_fit = np.linspace(alignment.index1.min(), alignment.index1.max(), alignment.index1.size)
-    y_fit = slope * x_fit + intercept
+#     x_fit = np.linspace(alignment.index1.min(), alignment.index1.max(), alignment.index1.size)
+#     y_fit = slope * x_fit + intercept
 
-    # tolerance = 100.0 # ou 50.0 basé sur la résolution fréquentiel
-    # within_tolerance = np.abs(alignment.index2 - y_fit) <= tolerance
-    # alignement_rate = np.sum(within_tolerance) / len(alignment.index2) * 100   # pourcentage des points en dehors de la courbe (avec une tolérnce)
+#     # tolerance = 100.0 # ou 50.0 basé sur la résolution fréquentiel
+#     # within_tolerance = np.abs(alignment.index2 - y_fit) <= tolerance
+#     # alignement_rate = np.sum(within_tolerance) / len(alignment.index2) * 100   # pourcentage des points en dehors de la courbe (avec une tolérnce)
 
-    sst = np.sum((alignment.index2 - np.mean(alignment.index2))**2)
-    sse =  np.sum((alignment.index2 - y_fit)**2)
-    ssr = np.sum((y_fit - np.mean(y_fit))**2)
+#     sst = np.sum((alignment.index2 - np.mean(alignment.index2))**2)
+#     sse =  np.sum((alignment.index2 - y_fit)**2)
+#     ssr = np.sum((y_fit - np.mean(y_fit))**2)
 
-    # alignement_rate = (1 - sse/sst) * 100 # coefficient de détermination R2
-    alignement_rate = ssr/sst
+#     # alignement_rate = (1 - sse/sst) * 100 # coefficient de détermination R2
+#     alignement_rate = ssr/sst
 
-    return (alignment.index1,alignment.index2), slope, alignement_rate
+#     return (alignment.index1,alignment.index2), slope, alignement_rate
 
 def jitter(onset_dev):
     '''
@@ -1411,6 +1535,19 @@ def phase_locking_value(signal_x_raw, signal_y_raw):
 
     return plv
 
+
+
+#                                ..######..########....###....########..######.
+#                                .##....##....##......##.##......##....##....##
+#                                .##..........##.....##...##.....##....##......
+#                                ..######.....##....##.....##....##.....######.
+#                                .......##....##....#########....##..........##
+#                                .##....##....##....##.....##....##....##....##
+#                                ..######.....##....##.....##....##.....######.
+
+
+# stats
+
 def pearson_corr(datax : Union[pd.Series,np.ndarray], datay : Union[pd.Series,np.ndarray], lag=0) -> float:
     """ 
     Pearson coefficient i.e. linear dependency between two time series shifted with a lag 
@@ -1657,19 +1794,22 @@ def granger_causality(signal1, signal2, max_lag, n_permutations=1) -> pd.DataFra
         #     n_resamples=n_permutations,
         # )
         # log_ratio ,log_ratio_p_value = res
-
-        def permutation_func(x,y):
-            #signal2 is the dependant variable
-            return _compute_log_ratio_statistics(x,signal2, lag)
-        res = permutation_test(
-            data=(signal1, signal2),
-            statistic=permutation_func,
-            vectorized=False, 
-            n_resamples=n_permutations, 
-            alternative='greater'
-        )
-        log_ratio = res.statistic
-        log_ratio_p_value = res.pvalue
+        if n_permutations > 1: #avoid to calculate log_ratio if no p-value
+            def permutation_func(x,y):
+                #signal2 is the dependant variable
+                return _compute_log_ratio_statistics(x,signal2, lag)
+            res = permutation_test(
+                data=(signal1, signal2),
+                statistic=permutation_func,
+                vectorized=False, 
+                n_resamples=n_permutations, 
+                alternative='greater'
+            )
+            log_ratio = res.statistic
+            log_ratio_p_value = res.pvalue
+        else:
+            log_ratio = 0
+            log_ratio_p_value = 1
 
         
         # Stocker les résultats
@@ -1848,15 +1988,30 @@ def zscore_column(df : pd.DataFrame, column_to_normalize : str, *columns :str, i
     else:
         return df.copy()
 
-# exit()
-# build the three experiment and trunc them 
+
+#  ______  _______ _______ _______                                                     
+#  |     \ |_____|    |    |_____|                                                     
+#  |_____/ |     |    |    |     |                                                     
+                                                                                     
+#   _____   ______ _______  _____  _______  ______ _______ _______ _____  _____  __   _
+#  |_____] |_____/ |______ |_____] |_____| |_____/ |_____|    |      |   |     | | \  |
+#  |       |    \_ |______ |       |     | |    \_ |     |    |    __|__ |_____| |  \_|
+                                                                                     
+
+# data preparation
 
 def trunc_before_first_onset(dataset : Dataset) -> None:
 
-    for k,df in dataset.iterate_df('onset','trial_n'):
+    tqdm_progressbar = tqdm( dataset.iterate_df('onset','trial_n'),desc='build')
+
+    for k,df in tqdm_progressbar:
+
+        trial_n = k[0]
+        tqdm_progressbar.set_postfix({'trial' : trial_n},refresh=True)
+        # tqdm_progressbar.set_description(str({'trial' : trial_n}),refresh=True)
+
         min_onset = min(df['onsets'])
         max_onset = max(df['onsets'])
-        trial_n = k[0]
         # print(k,min_onset)
         dataset.set_trunc(trial_n,(min_onset,max_onset+200))
 
@@ -1868,8 +2023,81 @@ columns_to_drop = ['acc_x' , 'acc_y' , 'acc_z' , 'gyro_x' , 'gyro_y' , 'gyro_z' 
 def drop_column_sig_dataset(dataset:Dataset,columns : list[str]):
     dataset.dataframes['sig'].drop(columns, axis=1, inplace=True)
 
-#motion
 
+
+                                                                                                              
+
+                                                                                                                       
+        #              ***** **                                                                                          
+        #           ******  ***                   *                                                                      
+        #         **    *  * ***                 **                                                                      
+        #        *     *  *   ***                **                                                                      
+        #             *  *     ***             ********                                                                  
+        #            ** **      **    ****    ********     ****                                                          
+        #            ** **      **   * ***  *    **       * ***  *                                                       
+        #            ** **      **  *   ****     **      *   ****                                                        
+        #            ** **      ** **    **      **     **    **                                                         
+        #            ** **      ** **    **      **     **    **                                                         
+        #            *  **      ** **    **      **     **    **                                                         
+        #               *       *  **    **      **     **    **                                                         
+        #          *****       *   **    **      **     **    **                                                         
+        #         *   *********     ***** **      **     ***** **                                                        
+        #        *       ****        ***   **             ***   **                                                       
+        #        *                                                                                                       
+        #         **                                                                                                     
+                                                                                                                       
+                                                                                                                       
+                                                                                                                       
+                                                                                                                       
+        #             ***** **                                                                                           
+        #          ******  ****                                                                                          
+        #         **   *  *  ***                                                                                         
+        #        *    *  *    ***                                                                                        
+        #            *  *      ** ***  ****       ****                            ****       ****                        
+        #           ** **      **  **** **** *   * ***  *    ****       ***      * **** *   * **** *                     
+        #           ** **      **   **   ****   *   ****    * ***  *   * ***    **  ****   **  ****                      
+        #         **** **      *    **         **    **    *   ****   *   ***  ****       ****                           
+        #        * *** **     *     **         **    **   **         **    ***   ***        ***                          
+        #           ** *******      **         **    **   **         ********      ***        ***                        
+        #           ** ******       **         **    **   **         *******         ***        ***                      
+        #           ** **           **         **    **   **         **         ****  **   ****  **                      
+        #           ** **           ***         ******    ***     *  ****    * * **** *   * **** *                       
+        #           ** **            ***         ****      *******    *******     ****       ****                        
+        #      **   ** **                                   *****      *****                                             
+        #     ***   *  *                                                                                                 
+        #      ***    *                                                                                                  
+        #       ******                                                                                                   
+        #         ***                                                                                                    
+                                                                                                                       
+                                                                                                                       
+        #          ***** **                                                                                      ***     
+        #       ******  ****                                                                                      ***    
+        #      **   *  *  ***                                                                                      **    
+        #     *    *  *    ***                                                                                     **    
+        #         *  *      **           ***  ****       ****       ****                                           **    
+        #        ** **      **    ***     **** **** *   * **** *   * ***  * ***  ****    ***  ****       ****      **    
+        #        ** **      **   * ***     **   ****   **  ****   *   ****   **** **** *  **** **** *   * ***  *   **    
+        #      **** **      *   *   ***    **         ****       **    **     **   ****    **   ****   *   ****    **    
+        #     * *** **     *   **    ***   **           ***      **    **     **    **     **    **   **    **     **    
+        #        ** *******    ********    **             ***    **    **     **    **     **    **   **    **     **    
+        #        ** ******     *******     **               ***  **    **     **    **     **    **   **    **     **    
+        #        ** **         **          **          ****  **  **    **     **    **     **    **   **    **     **    
+        #        ** **         ****    *   ***        * **** *    ******      **    **     **    **   **    **     **    
+        #        ** **          *******     ***          ****      ****       ***   ***    ***   ***   ***** **    *** * 
+        #   **   ** **           *****                                         ***   ***    ***   ***   ***   **    ***  
+        #  ***   *  *                                                                                                    
+        #   ***    *                                                                                                     
+        #    ******                                                                                                      
+        #      ***                                                                                                       
+                                                                                                                       
+                                                                                                       
+                                                                                                              
+
+
+# data process personnal
+
+
+# tsfresh features extract
 def extract_motion_features(df):
     # Create id
     df['id'] = df['trial_n'].astype(str) + '_' + df['riot_n'].astype(str)
@@ -1924,9 +2152,13 @@ def extract_onset_features(df):
     # extracted_features = extract_features(df, column_id='id',column_sort='t', column_value='intensity_filtered', default_fc_parameters=custom_fc_parameters)
     return None
 
+# process funcs
 
 def process_motion(motion_dataset : Dataset, motion_dfname:str = 'sig') -> Dict[str, pd.DataFrame] :
     
+    
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+
     low_cutoff = 0.2
     high_cutoff = 8.5
 
@@ -1936,7 +2168,11 @@ def process_motion(motion_dataset : Dataset, motion_dfname:str = 'sig') -> Dict[
     f_main_sig = pd.DataFrame()
     id_sig = pd.DataFrame()
     
-    for k,df in tqdm(motion_dataset.iterate_df(motion_dfname,'trial_n','riot_n'),desc = 'motion :'):
+    tqdm_progressbar = tqdm(motion_dataset.iterate_df(motion_dfname,'trial_n','riot_n'),desc = 'motion')
+    for k,df in tqdm_progressbar:
+
+        tqdm_progressbar.set_postfix({'trial': k[0],'riot_type': k[1]},refresh=True)
+        # tqdm_progressbar.set_description(str({'trial': k[0], 'riot_type': k[1]}),refresh=True)
         
         if df['intensity'].size == 0:
             print(k,'no sig')
@@ -1998,12 +2234,14 @@ def process_motion(motion_dataset : Dataset, motion_dfname:str = 'sig') -> Dict[
                 hints[col] = df[col].values[0]
                 f_main_sig_df[col] = df[col].values[0]
                 id_sig_df[col] = df[col].values[0]
-        
+
+        warnings.filterwarnings("ignore")
         filtered_sig = pd.concat([filtered_sig, filtered_df], ignore_index=True)
         processed_sig = pd.concat([processed_sig, processed_df], ignore_index=True)
         f_info_sig = pd.concat([f_info_sig, hints], ignore_index=True)
         f_main_sig = pd.concat([f_main_sig, f_main_sig_df], ignore_index=True)
         id_sig = pd.concat([id_sig, id_sig_df], ignore_index=True)
+        warnings.filterwarnings("default")
 
     # ts fresh to get features from filtered sig
     features : pd.DataFrame = extract_motion_features(filtered_sig.copy()) # type: ignore
@@ -2013,6 +2251,9 @@ def process_motion(motion_dataset : Dataset, motion_dfname:str = 'sig') -> Dict[
 
 
 def process_onset(onset_dataset : Dataset, onset_dfname:str = 'onset') -> Dict[str, pd.DataFrame]:
+    
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    
     dev_onset = pd.DataFrame()
     info_onset = pd.DataFrame()
     id_onset = pd.DataFrame()
@@ -2048,9 +2289,11 @@ def process_onset(onset_dataset : Dataset, onset_dfname:str = 'onset') -> Dict[s
                 info_onset_df[col] = df[col].values[0]
                 id_onset_df[col] = df[col].values[0]
 
+        warnings.filterwarnings("ignore")
         dev_onset = pd.concat([dev_onset, dev_onset_df], ignore_index=True)
         info_onset = pd.concat([info_onset, info_onset_df], ignore_index=True)
         id_onset = pd.concat([id_onset, id_onset_df], ignore_index=True)
+        warnings.filterwarnings("default")
 
     # ts fresh to get features from deviations
     dev_features : pd.DataFrame = extract_deviation_features(dev_onset.copy()) # type: ignore
@@ -2062,20 +2305,24 @@ def process_onset(onset_dataset : Dataset, onset_dfname:str = 'onset') -> Dict[s
 
     return {'dev_onset':dev_onset,'info_onset' : info_onset,'id_onset':id_onset,'deviation_features':dev_features}
 
-@jit
+
 def compute_onset_motion_features(onset_motion_dataset : Dataset,onset_dfname:str = 'onset',motion_dfname:str = 'processed_sig',
                                    deviation_dfname:str = 'dev_onset',onset_info_dfname:str = 'info_onset',
-                                   frequency_dfname:str = 'f_main_sig'):
+                                   frequency_dfname:str = 'f_main_sig',gc_lag : int = 80):
+    
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     
     onset_motion_features = pd.DataFrame()
     gc_om_details = pd.DataFrame()
     gc_mo_details = pd.DataFrame()
 
-    gc_lag = 1
+    # avoid compute complexity
+    gc_lag = 80
 
-    for k,dfs in tqdm(onset_motion_dataset.iterate_dfs('trial_n','musician','riot_type'),desc = 'onset motion :'):
-        
-            
+    tqdm_progressbar = tqdm(onset_motion_dataset.iterate_dfs('trial_n','musician','riot_type'),desc = 'onset motion')
+    for k,dfs in tqdm_progressbar:
+        tqdm_progressbar.set_postfix({'trial': k[0],'musician': k[1], 'riot_type': k[2]},refresh=True)
+        # tqdm_progressbar.set_description(str({'trial': k[0],'musician': k[1], 'riot_type': k[2]}),refresh=True)
         if(dfs[onset_dfname].empty):
             print(k,'no onset')
             continue
@@ -2109,8 +2356,8 @@ def compute_onset_motion_features(onset_motion_dataset : Dataset,onset_dfname:st
         sig_onset_apodize = center_sig(apodize(sig_onset,tempo/1000,fs=100))
         sine_onset =  (max(sig_motion)) * np.sin(2 * np.pi * period_to_frequency(tempo) * t )
 
-        onset_sample = tempo*fs
-        onset_frequency = period_to_frequency(tempo)
+        # onset_sample = tempo*fs
+        # onset_frequency = period_to_frequency(tempo)
 
         # ideal lag is between max (max ioi (in s) , motion frequency) to observe 1 interact TODO
         nT = 1 # number of period to look out
@@ -2187,6 +2434,7 @@ def compute_onset_motion_features(onset_motion_dataset : Dataset,onset_dfname:st
         # 'gc_mo_log-ratio_std' : gc_motion_onset['gc_log_ratio_std'],
         })
 
+        warnings.filterwarnings("ignore")
         columns_to_add = ['trial_n', 'riot_n', 'musician', 'riot_type', 'factor1', 'factor2','change']
         for col in columns_to_add:
             if col in dfs[motion_dfname].columns:
@@ -2194,7 +2442,7 @@ def compute_onset_motion_features(onset_motion_dataset : Dataset,onset_dfname:st
                 gc_om_df[col] = dfs[motion_dfname][col].values[0]
                 gc_mo_df[col] = dfs[motion_dfname][col].values[0]
 
-        warnings.filterwarnings("ignore")
+        
         onset_motion_features = pd.concat([onset_motion_features, onset_motion_features_df], ignore_index=True)
         gc_om_details = pd.concat([gc_om_details, gc_om_df], ignore_index=True)
         gc_mo_details = pd.concat([gc_mo_details, gc_mo_df], ignore_index=True)
@@ -2202,18 +2450,76 @@ def compute_onset_motion_features(onset_motion_dataset : Dataset,onset_dfname:st
 
     return  onset_motion_features
 
+
+
+                                                                                                                                                                                                                    
+#                                _____          ____    _________________        ____                                                                                                                              
+#                            ___|\    \    ____|\   \  /                 \  ____|\   \                                                                                                                             
+#                           |    |\    \  /    /\    \ \______     ______/ /    /\    \                                                                                                                            
+#                           |    | |    ||    |  |    |   \( /    /  )/   |    |  |    |                                                                                                                           
+#                           |    | |    ||    |__|    |    ' |   |   '    |    |__|    |                                                                                                                           
+#                           |    | |    ||    .--.    |      |   |        |    .--.    |                                                                                                                           
+#                           |    | |    ||    |  |    |     /   //        |    |  |    |                                                                                                                           
+#                           |____|/____/||____|  |____|    /___//         |____|  |____|                                                                                                                           
+#                           |    /    | ||    |  |    |   |`   |          |    |  |    |                                                                                                                           
+#                           |____|____|/ |____|  |____|   |____|          |____|  |____|                                                                                                                           
+#                             \(    )/     \(      )/       \(              \(      )/                                                                                                                             
+#                              '    '       '      '         '               '      '                                                                                                                              
+                                                                                                                                                                                                                    
+                                                                                                                                                                                                                    
+#                          _____        _____           _____          _____        ______            ______           ______                                                                                      
+#                      ___|\    \   ___|\    \     ____|\    \     ___|\    \   ___|\     \       ___|\     \      ___|\     \                                                                                     
+#                     |    |\    \ |    |\    \   /     /\    \   /    /\    \ |     \     \     |    |\     \    |    |\     \                                                                                    
+#                     |    | |    ||    | |    | /     /  \    \ |    |  |    ||     ,_____/|    |    |/____/|    |    |/____/|                                                                                    
+#                     |    |/____/||    |/____/ |     |    |    ||    |  |____||     \--'\_|/ ___|    \|   | | ___|    \|   | |                                                                                    
+#                     |    ||    |||    |\    \ |     |    |    ||    |   ____ |     /___/|  |    \    \___|/ |    \    \___|/                                                                                     
+#                     |    ||____|/|    | |    ||\     \  /    /||    |  |    ||     \____|\ |    |\     \    |    |\     \                                                                                        
+#                     |____|       |____| |____|| \_____\/____/ ||\ ___\/    /||____ '     /||\ ___\|_____|   |\ ___\|_____|                                                                                       
+#                     |    |       |    | |    | \ |    ||    | /| |   /____/ ||    /_____/ || |    |     |   | |    |     |                                                                                       
+#                     |____|       |____| |____|  \|____||____|/  \|___|    | /|____|     | / \|____|_____|    \|____|_____|                                                                                       
+#                       \(           \(     )/       \(    )/       \( |____|/   \( |_____|/     \(    )/         \(    )/                                                                                         
+#                        '            '     '         '    '         '   )/       '    )/         '    '           '    '                                                                                          
+#                                                                        '             '                                                                                                                           
+                                                                                                                                                                                                                    
+#    ____  _____   ______    _________________      ______        _____        _____        ______        _____            ______          _____     _____   ______    _____   ______          ____    ____        
+#   |    ||\    \ |\     \  /                 \ ___|\     \   ___|\    \   ___|\    \   ___|\     \   ___|\    \       ___|\     \    ____|\    \   |\    \ |\     \  |\    \ |\     \    ____|\   \  |    |       
+#   |    | \\    \| \     \ \______     ______/|     \     \ |    |\    \ |    |\    \ |     \     \ |    |\    \     |    |\     \  /     /\    \   \\    \| \     \  \\    \| \     \  /    /\    \ |    |       
+#   |    |  \|    \  \     |   \( /    /  )/   |     ,_____/||    | |    ||    | |    ||     ,_____/||    | |    |    |    |/____/| /     /  \    \   \|    \  \     |  \|    \  \     ||    |  |    ||    |       
+#   |    |   |     \  |    |    ' |   |   '    |     \--'\_|/|    |/____/ |    |/____/||     \--'\_|/|    |/____/  ___|    \|   | ||     |    |    |   |     \  |    |   |     \  |    ||    |__|    ||    |  ____ 
+#   |    |   |      \ |    |      |   |        |     /___/|  |    |\    \ |    ||    |||     /___/|  |    |\    \ |    \    \___|/ |     |    |    |   |      \ |    |   |      \ |    ||    .--.    ||    | |    |
+#   |    |   |    |\ \|    |     /   //        |     \____|\ |    | |    ||    ||____|/|     \____|\ |    | |    ||    |\     \    |\     \  /    /|   |    |\ \|    |   |    |\ \|    ||    |  |    ||    | |    |
+#   |____|   |____||\_____/|    /___//         |____ '     /||____| |____||____|       |____ '     /||____| |____||\ ___\|_____|   | \_____\/____/ |   |____||\_____/|   |____||\_____/||____|  |____||____|/____/|
+#   |    |   |    |/ \|   ||   |`   |          |    /_____/ ||    | |    ||    |       |    /_____/ ||    | |    || |    |     |    \ |    ||    | /   |    |/ \|   ||   |    |/ \|   |||    |  |    ||    |     ||
+#   |____|   |____|   |___|/   |____|          |____|     | /|____| |____||____|       |____|     | /|____| |____| \|____|_____|     \|____||____|/    |____|   |___|/   |____|   |___|/|____|  |____||____|_____|/
+#     \(       \(       )/       \(              \( |_____|/   \(     )/    \(           \( |_____|/   \(     )/      \(    )/          \(    )/         \(       )/       \(       )/    \(      )/    \(    )/   
+#      '        '       '         '               '    )/       '     '      '            '    )/       '     '        '    '            '    '           '       '         '       '      '      '      '    '    
+#                                                      '                                       '                                                                                                                   
+
+
+
+# data process interperonnal
+
 def compute_entrainment_features(sig1,sig2,range_s,range_sample,min_len,avoid_invert = False):
+
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+
+    low_cutoff = 0.2
+    high_cutoff = 8.5
+
     sig1 = sig1[:min_len]
     sig2 = sig2[:min_len]
 
-    lags, corr = xcorrelation(sig1, sig2,True,True,fs)
-
                 # cc
     xcorr_0_12,lag_12,xcorr_lag_12 = xcorrelation_metrics(sig2,sig1,range_s,lag_seconde=True)
-                # coh [0.2:8Hz]
-    # ne fait pas
+                # coherence max[0.2:8Hz]
+    f,coh = signal.coherence(sig1,sig2,fs=100,nperseg=2048,noverlap=2047,window='hamming',nfft=sig1.size)
+    indices = np.where((f >= low_cutoff) & (f <= high_cutoff))[0]
+    coh_filtered = coh[indices] 
+    f_filtered = f[indices] 
+    coh_max = np.max(coh_filtered)
+    coh_f = f_filtered[np.argmax(coh_filtered)]
                 # SI
-    si_onset_nextmotion_head = phase_locking_value(sig1,sig2)
+    si = phase_locking_value(sig1,sig2)
                 # GC
     gc_res = granger_causality(sig1,sig2,range_sample)
     gc_12 = analyze_granger_causality(gc_res)
@@ -2223,6 +2529,9 @@ def compute_entrainment_features(sig1,sig2,range_s,range_sample,min_len,avoid_in
         'xcorr_0' : [xcorr_0_12],
         'lag' : [lag_12],
         'xcorr_lag' : [xcorr_lag_12],
+        'coh_max' : [coh_max],
+        'coh_f' : [coh_f],
+        'si' : [si],
         'gc_F_lag' : gc_12['gc_F_lag'],
         'gc_F_lag_max' : gc_12['gc_F_lag_max'],
         'gc_F_mean' : gc_12['gc_F_mean'],
@@ -2237,9 +2546,14 @@ def compute_entrainment_features(sig1,sig2,range_s,range_sample,min_len,avoid_in
                 # cc
     xcorr_0_21,lag_21,xcorr_lag_21 = xcorrelation_metrics(sig1,sig2,range_s,lag_seconde=True)
                 # coh [0.2:8Hz]
-    # ne fait pas
+    f,coh = signal.coherence(sig1,sig2,fs=100,nperseg=2048,noverlap=2047,window='hamming',nfft=sig1.size)
+    indices = np.where((f >= low_cutoff) & (f <= high_cutoff))
+    coh_filtered = coh[indices] 
+    f_filtered = f[indices] 
+    coh_max = np.max(coh_filtered)
+    coh_f = f_filtered[np.argmax(coh_filtered)]
                 # SI
-    si_onset_nextmotion_head = phase_locking_value(sig1,sig2)
+    si = phase_locking_value(sig1,sig2)
                 # GC
     gc_res = granger_causality(sig2,sig1,range_sample)
     gc_21 = analyze_granger_causality(gc_res)
@@ -2248,6 +2562,9 @@ def compute_entrainment_features(sig1,sig2,range_s,range_sample,min_len,avoid_in
     'xcorr_0' : [xcorr_0_21],
     'lag' : [lag_21],
     'xcorr_lag' : [xcorr_lag_21],
+    'coh_max' : [coh_max],
+    'coh_f' : [coh_f],
+    'si' : [si],
     'gc_F_lag' : gc_21['gc_F_lag'],
     'gc_F_lag_max' : gc_21['gc_F_lag_max'],
     'gc_F_mean' : gc_21['gc_F_mean'],
@@ -2256,32 +2573,39 @@ def compute_entrainment_features(sig1,sig2,range_s,range_sample,min_len,avoid_in
 
     return res_1_on_2,res_2_on_1
 
-def compute_static_entrainment(dataset):
+def compute_static_entrainment(dataset : Dataset,tempo_window_size : int = 4,gc_sample : int = 80):
+    
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    warnings.filterwarnings("ignore")
     element_to_visit = dataset.get_df_unique_values('sig_df','trial_n','musician','riot_type')
-    sig_df = dataset.get_df('sig_df')
+    # sig_df = dataset.get_df('sig_df')
 
-    trials = list(element_to_visit['trial_n'])
-    musicians = list(element_to_visit['musician'])
+    trials : list[int] = list(element_to_visit['trial_n'])
+    musicians : list[str] = list(element_to_visit['musician'])
+
     riot_types = list(element_to_visit['riot_type']) #TODO for generic purpose
     riot_head = 'head' #TODO
     riot_limb = list({x for x in riot_types if x != riot_head})[0] #TODO
+
     # parameters
-    tempo_window_size = 4
+    # tempo_window_size = 4
     apodize_height = 0.01
-    gc_sample = 60
-    # gc_sample = 200
+    # gc_sample = 80
+    # gc_sample = 200 ideal to get entrainment at the musical phrase scale
 
     res_motion = pd.DataFrame()
     res_onset_motion = pd.DataFrame()
     res_onset = pd.DataFrame()
-    for trial_n in trials:
-        print(trial_n)
+
+    tqdm_progress_main = tqdm(trials,desc='entrainment')
+    for trial_n in tqdm_progress_main:
+
+        # print(trial_n)
         # if trial_n > 1 : continue
 
-
         #parcoure triangulaire
-        for m in tqdm(range(len(musicians))):
-
+        tqdm_progress = tqdm(range(len(musicians)),leave=False,desc='')
+        for m in tqdm_progress:
             # get all what we want
             musician = musicians[m]
             onset_df = dataset.get_data_in_df('onset_df',trial_n=trial_n,musician=musician)
@@ -2296,6 +2620,7 @@ def compute_static_entrainment(dataset):
             head_sig = head_sig['intensity'].to_numpy()
             limb_sig = dataset.get_data_in_df('sig_df',trial_n=trial_n,musician=musician,riot_type=riot_limb)['intensity'].to_numpy()
             try:
+                #TODO GC and CC lag depend of this
                 head_main_frequency = dataset.get_data_in_df('frequency',trial_n=trial_n,musician=musician,riot_type=riot_head).values[0]
                 limb_main_frequency = dataset.get_data_in_df('sig_df',trial_n=trial_n,musician=musician,riot_type=riot_limb).values[0]
             except IndexError:
@@ -2331,12 +2656,15 @@ def compute_static_entrainment(dataset):
                 tempo_next,_,_,ioi_next  = calculate_tempo(onset_df_next ,window_size=tempo_window_size,bpm=False) # type: ignore
                 sig_onset_apodize_next = center_sig(apodize(sig_onset_next,tempo_next/1000,fs=100))
 
-                print(trial_n,musician_next,'->',musician)
+                # print(trial_n,musician_next,'->',musician)
 
                 # avoid 1 sample len diff
                 min_len = min(len(limb_sig),len(limb_sig_next),len(head_sig),len(head_sig_next),len(sig_onset_apodize),len(sig_onset_apodize_next))
                 sig_onset_apodize = sig_onset_apodize[:min_len]
                 sig_onset_apodize_next = sig_onset_apodize_next[:min_len]
+
+                tqdm_progress.set_postfix({'trial':trial_n,'musician':musician +' '+musician_next })
+                tqdm_progress_main.set_postfix({'trial':trial_n,'musician':musician +' '+musician_next })
 
                 # onset_next <-> onset
                         # cc
@@ -2439,17 +2767,47 @@ def compute_static_entrainment(dataset):
                 res_mmnext_limb[col] = riot_limb
                 res_mmnext_motion_limb[col] = riot_limb
                         
+                warnings.filterwarnings("ignore")
                 res_onset_motion = pd.concat([res_onset_motion, res_mnextm_head,res_mnextm_limb,res_mmnext_head,res_mmnext_limb], ignore_index=True)
                 res_motion = pd.concat([res_motion, res_mnextm_motion_head,res_mnextm_motion_limb,res_mmnext_motion_head,res_mmnext_motion_limb], ignore_index=True)
                 res_onset = pd.concat([res_onset,res_onset_df], ignore_index=True)
+                warnings.filterwarnings("default")
+
     return{'entrainment_onset':res_onset,'entrainment_onset_motion':res_onset_motion,'entrainment_motion':res_motion}
 
-if __name__ ==  '__main__':
+
+
+
+
+
+#                                           *                         
+#                                         (  `                        
+#                                         )\))(       )   (           
+#                                        ((_)()\   ( /(   )\    (     
+#                                        (_()((_)  )(_)) ((_)   )\ )  
+#                                        |  \/  | ((_)_   (_)  _(_/(  
+#                                        | |\/| | / _` |  | | | ' \)) 
+#                                        |_|  |_| \__,_|  |_| |_||_|  
+                             
+
+
+
+
+# main funcs
+
+
+
+
+
+
+def run_build():
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    
     #Click Tempo
 
     folder = CLICK_TEMPO_FOLDER
 
-    print('building')
+    print(folder,'building')
 
     click_tempo_dataset = Dataset(trunc_logic=trunc_dfs,exp_name='click_tempo')
     click_tempo_dataset.build_add_df('sig',compiling_exp_to_df,
@@ -2481,10 +2839,11 @@ if __name__ ==  '__main__':
     truncated_dataset.get_df('onset').to_csv(os.path.join(MAIN_DATA_FOLDER,'csv/click_tempo_onset.csv'))
 
     #Mask attack
+    warnings.simplefilter(action='ignore', category=FutureWarning)
 
     folder = MASK_ATTACK_FOLDER
 
-    print('building')
+    print(folder,'building')
 
     mask_attack_dataset = Dataset(trunc_logic=trunc_dfs,exp_name='mask_attack')
     mask_attack_dataset.build_add_df('sig',compiling_exp_to_df,
@@ -2513,10 +2872,11 @@ if __name__ ==  '__main__':
     print('done')
 
     #Change
+    warnings.simplefilter(action='ignore', category=FutureWarning)
 
     folder = CHANGE_FOLDER
 
-    print('building')
+    print(folder,'building')
 
     change_dataset = Dataset(trunc_logic=trunc_dfs,exp_name='change')
     change_dataset.build_add_df('sig',compiling_exp_to_df,
@@ -2543,9 +2903,11 @@ if __name__ ==  '__main__':
 
     print('done building all exp')
 
-
+def run_personnal():
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     #click tempo
     exp = 'click_tempo'
+    print(exp,'personal synchrony')
 
     data = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_intensity.csv'))
     onset = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_onset.csv'))
@@ -2574,7 +2936,10 @@ if __name__ ==  '__main__':
     static_features.export_dataframes_to_csv(os.path.join(MAIN_DATA_FOLDER,'csv/'))
 
     #mask attack
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    
     exp = 'mask_attack'
+    print(exp,'personal synchrony')
 
     data = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_intensity.csv'))
     onset = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_onset.csv'))
@@ -2603,7 +2968,9 @@ if __name__ ==  '__main__':
     static_features.export_dataframes_to_csv(os.path.join(MAIN_DATA_FOLDER,'csv/'))
 
     #change
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     exp = 'change'
+    print(exp,'personal synchrony')
 
     data = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_intensity.csv'))
     onset = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_onset.csv'))
@@ -2631,9 +2998,11 @@ if __name__ ==  '__main__':
     static_features.save(os.path.join(MAIN_DATA_FOLDER,'cache',exp+'_features.pkl'))
     static_features.export_dataframes_to_csv(os.path.join(MAIN_DATA_FOLDER,'csv/'))
 
-
+def run_interpersonnal():
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     #click tempo
     exp = 'click_tempo'
+    print(exp,'interpersonal synchrony')
 
     data = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_processed_sig.csv'))
     onset = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_onset.csv'))
@@ -2647,8 +3016,10 @@ if __name__ ==  '__main__':
     dataset_res.save(os.path.join(MAIN_DATA_FOLDER,'cache',exp+'_entrainment_features.pkl'))
     dataset_res.export_dataframes_to_csv(os.path.join(MAIN_DATA_FOLDER,'csv'))
 
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     #mask attack
     exp = 'mask_attack'
+    print(exp,'interpersonal synchrony')
 
     data = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_processed_sig.csv'))
     onset = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_onset.csv'))
@@ -2662,8 +3033,10 @@ if __name__ ==  '__main__':
     dataset_res.save(os.path.join(MAIN_DATA_FOLDER,'cache',exp+'_entrainment_features.pkl'))
     dataset_res.export_dataframes_to_csv(os.path.join(MAIN_DATA_FOLDER,'csv'))
 
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     #change
     exp = 'change'
+    print(exp,'interpersonal synchrony')
 
     data = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_processed_sig.csv'))
     onset = pd.read_csv(os.path.join(MAIN_DATA_FOLDER,'csv',exp+'_onset.csv'))
@@ -2676,3 +3049,14 @@ if __name__ ==  '__main__':
     dataset_res.add_dfs(entrainment_static_features)
     dataset_res.save(os.path.join(MAIN_DATA_FOLDER,'cache',exp+'_entrainment_features.pkl'))
     dataset_res.export_dataframes_to_csv(os.path.join(MAIN_DATA_FOLDER,'csv'))
+
+def run_main():
+    run_build()
+    run_personnal()
+    run_interpersonnal()
+
+if __name__ ==  '__main__':
+    # run_main()
+    # run_build()
+    # run_personnal()
+    run_interpersonnal()
